@@ -1,0 +1,64 @@
+import tweepy
+from textblob import TextBlob
+import matplotlib.pyplot as plt
+
+# Twitter API credentials
+consumer_key = "YOUR_CONSUMER_KEY"
+consumer_secret = "YOUR_CONSUMER_SECRET"
+access_token = "YOUR_ACCESS_TOKEN"
+access_token_secret = "YOUR_ACCESS_TOKEN_SECRET"
+
+# Authenticate with Twitter API
+auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
+api = tweepy.API(auth)
+
+def get_tweets(query, count):
+    tweets = []
+    try:
+        fetched_tweets = api.search(q=query, count=count)
+        for tweet in fetched_tweets:
+            parsed_tweet = {}
+            parsed_tweet['text'] = tweet.text
+            parsed_tweet['sentiment'] = get_tweet_sentiment(tweet.text)
+            tweets.append(parsed_tweet)
+        return tweets
+    except tweepy.TweepError as e:
+        print("Error: " + str(e))
+
+def get_tweet_sentiment(tweet):
+    analysis = TextBlob(tweet)
+    if analysis.sentiment.polarity > 0:
+        return 'positive'
+    elif analysis.sentiment.polarity == 0:
+        return 'neutral'
+    else:
+        return 'negative'
+
+def main():
+    query = input("Enter the search query: ")
+    count = int(input("Enter the number of tweets to analyze: "))
+
+    tweets = get_tweets(query, count)
+    positive_tweets = [tweet for tweet in tweets if tweet['sentiment'] == 'positive']
+    negative_tweets = [tweet for tweet in tweets if tweet['sentiment'] == 'negative']
+    neutral_tweets = [tweet for tweet in tweets if tweet['sentiment'] == 'neutral']
+
+    # Print sentiment statistics
+    print("Sentiment Analysis Results:")
+    print("Total Tweets Analyzed:", len(tweets))
+    print("Positive Tweets:", len(positive_tweets))
+    print("Negative Tweets:", len(negative_tweets))
+    print("Neutral Tweets:", len(neutral_tweets))
+
+    # Plotting the sentiment distribution
+    labels = ['Positive', 'Negative', 'Neutral']
+    sizes = [len(positive_tweets), len(negative_tweets), len(neutral_tweets)]
+    colors = ['yellowgreen', 'red', 'lightcoral']
+    plt.pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=140)
+    plt.axis('equal')
+    plt.title('Sentiment Analysis Results')
+    plt.show()
+
+if __name__ == '__main__':
+    main()
